@@ -13,6 +13,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 import base64
 import io
+import json
 from core_algorithm import DualTrackCORESystem
 
 # Initialize app
@@ -354,11 +355,41 @@ def create_summary_cards(df):
         ], width=3),
     ], className='mb-4')
 
+def create_performance_data_json(row):
+    """Create a JSON object with Last 3 Months and Lifetime performance data"""
+    performance_data = {
+        "Last 3 Months": {
+            "Lots Sold": int(row.get('last3_months_lots_sold', 0)) if pd.notna(row.get('last3_months_lots_sold')) else 0,
+            "Active Days": int(row.get('last3_months_active_days', 0)) if pd.notna(row.get('last3_months_active_days')) else 0,
+            "Sales Velocity": round(float(row.get('last3_months_sales_velocity', 0)), 2) if pd.notna(row.get('last3_months_sales_velocity')) else 0,
+            "Days with Sales": int(row.get('last3_months_lots_sold_days', 0)) if pd.notna(row.get('last3_months_lots_sold_days')) else 0,
+            "Conversion Rate": round(float(row.get('last3_months_conversion_days', 0)), 2) if pd.notna(row.get('last3_months_conversion_days')) else 0,
+            "Net Delivered Buyers": int(row.get('last3_months_net_delivered_buyers', 0)) if pd.notna(row.get('last3_months_net_delivered_buyers')) else 0,
+            "Net Delivered Lots": int(row.get('last3_months_net_delivered_lots', 0)) if pd.notna(row.get('last3_months_net_delivered_lots')) else 0
+        },
+        "Lifetime": {
+            "Lots Sold": int(row.get('lifetime_lots_sold', 0)) if pd.notna(row.get('lifetime_lots_sold')) else 0,
+            "Active Days": int(row.get('lifetime_active_days', 0)) if pd.notna(row.get('lifetime_active_days')) else 0,
+            "Sales Velocity": round(float(row.get('lifetime_sales_velocity', 0)), 2) if pd.notna(row.get('lifetime_sales_velocity')) else 0,
+            "Days with Sales": int(row.get('lifetime_lots_sold_days', 0)) if pd.notna(row.get('lifetime_lots_sold_days')) else 0,
+            "Conversion Rate": round(float(row.get('lifetime_conversion_days', 0)), 2) if pd.notna(row.get('lifetime_conversion_days')) else 0,
+            "Net Delivered Buyers": int(row.get('lifetime_net_delivered_buyers', 0)) if pd.notna(row.get('lifetime_net_delivered_buyers')) else 0,
+            "Net Delivered Lots": int(row.get('lifetime_net_delivered_lots', 0)) if pd.notna(row.get('lifetime_net_delivered_lots')) else 0,
+            "Repeat Buyers": int(row.get('lifetime_repeat_buyers', 0)) if pd.notna(row.get('lifetime_repeat_buyers')) else 0,
+            "Repeat Buyer Ratio": round(float(row.get('repeat_buyer_ratio', 0)), 2) if pd.notna(row.get('repeat_buyer_ratio')) else 0
+        }
+    }
+    return json.dumps(performance_data)
+
 def create_data_table(df):
     """Create interactive data table with all metrics"""
 
     # Define columns to display
     df = df.copy()
+
+    # Add performance data JSON column
+    df['performance_data'] = df.apply(create_performance_data_json, axis=1)
+
     display_columns = [
         {'name': 'Variant ID', 'id': 'variantid', 'type': 'text'} if 'variantid' in df.columns else None,
         {'name': 'Darkstore', 'id': 'darkstorename', 'type': 'text'} if 'darkstorename' in df.columns else None,
@@ -381,6 +412,7 @@ def create_data_table(df):
         {'name': 'Recent Active Days', 'id': 'last3_months_active_days', 'type': 'numeric'},
         {'name': 'Lifetime Velocity', 'id': 'lifetime_sales_velocity', 'type': 'numeric'},
         {'name': 'Lifecycle', 'id': 'lifecycle', 'type': 'text'} if 'lifecycle' in df.columns else None,
+        {'name': 'Performance Data', 'id': 'performance_data', 'type': 'text'},
     ]
 
     # Filter out None values
